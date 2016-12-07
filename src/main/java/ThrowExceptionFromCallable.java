@@ -1,3 +1,5 @@
+import jdk.nashorn.internal.ir.annotations.Immutable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -8,6 +10,7 @@ import java.util.concurrent.*;
  */
 public class ThrowExceptionFromCallable {
 
+    @Immutable
     private final static class TaskResult {
         private final String threadName;
         private final String className;
@@ -45,9 +48,15 @@ public class ThrowExceptionFromCallable {
 
     public static void main(String[] args) {
         ExecutorService executorService = Executors.newFixedThreadPool(5);
-        Callable<TaskResult> throwTask = new ThrowTask();
         Callable<TaskResult> okTask = new OkTask();
         List<Future<TaskResult>> futures = new ArrayList<>();
+
+        Callable<TaskResult> throwTask = () -> {
+            Thread.sleep(new Random().nextInt(5*1000));
+            System.out.format("ThrowTask: %s%n", Thread.currentThread().getName());
+            int divideByZero = 1/0;
+            return new TaskResult(Thread.currentThread().getName(), "ThrowTask", 0);
+        };
 
         futures.add(executorService.submit(okTask));
         futures.add(executorService.submit(throwTask));
